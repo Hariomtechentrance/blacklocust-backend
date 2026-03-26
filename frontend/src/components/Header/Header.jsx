@@ -5,11 +5,13 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/axios';
 import logo from '../../assets/images/new-logo.png';
+import HamburgerMenu from './HamburgerMenu';
 import './Header.css';
 
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [navbarOpen, setNavbarOpen] = useState(false);
+  const [hamburgerOpen, setHamburgerOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const [collections, setCollections] = useState([]);
   const { totalItems } = useCart();
@@ -33,6 +35,10 @@ const Header = () => {
       console.log("🔥 New state:", !prev);
       return !prev;
     });
+  };
+
+  const toggleHamburger = () => {
+    setHamburgerOpen(!hamburgerOpen);
   };
 
   const handleLogout = () => {
@@ -145,50 +151,11 @@ const Header = () => {
       {/* Header */}
       <header className="header">
         <nav className="nav-container">
-          {/* Left - Dropdown Navbar */}
+          {/* Left - Hamburger Menu */}
           <div className="nav-left">
-            <button className="navbar-toggle" onClick={toggleNavbar}>
-              <span>☰ Menu</span>
+            <button className="hamburger-menu" onClick={toggleHamburger}>
+              <FaBars className="text-xl" />
             </button>
-            
-            {/* Dropdown Navbar */}
-            <div className={`dropdown-navbar ${navbarOpen ? 'open' : ''}`}
-                 style={{display: 'block'}}>
-              <div className="dropdown-content">
-                {/* Debug indicator */}
-                <div style={{
-                  padding: '5px 10px', 
-                  background: navbarOpen ? '#4CAF50' : '#f44336', 
-                  color: 'white', 
-                  fontSize: '12px',
-                  marginBottom: '5px'
-                }}>
-                  DEBUG: {navbarOpen ? 'OPEN' : 'CLOSED'} ({collections.length} collections)
-                </div>
-                
-                {collections.map((collection, index) => {
-                  const collectionName = collection.name.toLowerCase();
-                  const shouldRedirectToProducts = 
-                    collectionName.includes('kids') || 
-                    collectionName.includes('kids collection') ||
-                    collectionName.includes('mens') || 
-                    collectionName.includes('men') ||
-                    collectionName.includes('mens collection') ||
-                    collectionName.includes('men collection');
-                  
-                  return (
-                    <Link 
-                      key={collection._id || index}
-                      to={shouldRedirectToProducts ? '/products' : `/collection/${collection.slug}`} 
-                      className="dropdown-item"
-                      onClick={() => setNavbarOpen(false)}
-                    >
-                      {collection.name}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
           </div>
 
           {/* Center - Logo */}
@@ -223,13 +190,6 @@ const Header = () => {
           </div>
         </nav>
       </header>
-
-      {/* Mobile Menu Toggle */}
-      <div className="mobile-menu-toggle">
-        <button className="hamburger-menu" onClick={toggleMenu}>
-          <FaBars />
-        </button>
-      </div>
 
       {/* Mobile Side Navigation */}
       <nav className={`side-nav ${menuOpen ? 'active' : ''}`} id="sideNav">
@@ -311,6 +271,9 @@ const Header = () => {
           )}
         </div>
       </nav>
+
+      {/* Hamburger Menu Component */}
+      <HamburgerMenu isOpen={hamburgerOpen} onClose={() => setHamburgerOpen(false)} />
     </>
   );
 };
