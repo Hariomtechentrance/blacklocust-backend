@@ -2,6 +2,61 @@ import mongoose from "mongoose";
 import Product from "../models/Product.js";
 import Category from "../models/Category.js";
 
+function escapeRegex(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Expand user keywords so e.g. "pants" matches trousers, jeans, denim in DB copy */
+function expandSearchTerms(raw) {
+  const term = String(raw || "").trim();
+  if (!term) return [];
+  const lower = term.toLowerCase();
+  const set = new Set([term]);
+  const synonyms = {
+    pant: ["trouser", "trousers", "jean", "jeans", "denim", "chino", "chinos", "cargo", "formal pant", "straight-fit"],
+    pants: ["trouser", "trousers", "jean", "jeans", "denim", "chino", "chinos", "cargo", "pant", "formal"],
+    shirt: ["polo", "polo t", "t-shirt", "tee", "shirt", "casual shirt"],
+    shirts: ["shirt", "polo", "tee"],
+    jean: ["denim", "jeans", "trouser"],
+    jeans: ["denim", "jean", "trouser"],
+    denim: ["jean", "jeans", "trouser"],
+    trouser: ["pants", "pant", "formal"],
+    trousers: ["pants", "pant", "formal"],
+    tshirt: ["polo", "tee", "shirt"],
+    shoe: ["sneaker", "boot", "loafer"],
+  };
+  const keys = [lower, lower.endsWith("s") ? lower.slice(0, -1) : `${lower}s`];
+  for (const k of keys) {
+    if (synonyms[k]) synonyms[k].forEach((x) => set.add(x));
+  }
+  return [...set];
+}
+
+function buildSearchFilter(search) {
+  const patterns = expandSearchTerms(search);
+  const orClauses = [];
+  for (const p of patterns) {
+    const e = escapeRegex(p);
+    if (!e) continue;
+    const re = new RegExp(e, "i");
+    orClauses.push(
+      { name: re },
+      { description: re },
+      { skuCode: re },
+      { h1Heading: re },
+      { specifications: re },
+      { tags: re },
+      { brand: re },
+      { material: re },
+      { colors: re },
+      { "productSpecs.marketingDescription": re },
+      { "productSpecs.technicalSpecs.fabric": re },
+      { "productSpecs.technicalSpecs.occasion": re }
+    );
+  }
+  return orClauses.length ? { $or: orClauses } : null;
+}
+
 /*
 ---------------------------------------------------------
 CREATE PRODUCT
@@ -71,7 +126,8 @@ GET /api/products
 */
 export const getProductsSimple = async (req, res) => {
   try {
-    const { category, minPrice, maxPrice, search, sortBy, season } = req.query;
+    const { category, minPrice, maxPrice, sortBy, season } = req.query;
+    const search = typeof req.query.search === "string" ? req.query.search.trim() : "";
 
     const filters = [{ isActive: true }];
 
@@ -102,12 +158,8 @@ export const getProductsSimple = async (req, res) => {
     }
 
     if (search) {
-      filters.push({
-        $or: [
-          { name: { $regex: search, $options: "i" } },
-          { description: { $regex: search, $options: "i" } }
-        ]
-      });
+      const searchFilter = buildSearchFilter(search);
+      if (searchFilter) filters.push(searchFilter);
     }
 
     if (season) {
