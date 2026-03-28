@@ -9,7 +9,9 @@
     "dev": "nodemon server.js",
     "prod": "NODE_ENV=production node server.js",
     "build": "echo 'Backend build complete - ready for deployment'",
-    "seed": "node config/seeder.js"
+    "seed": "node config/seeder.js",
+    "reset-admin": "node scripts/resetBlacklocustAdmin.js",
+    "import-catalog": "node scripts/importFullCatalog.js"
   },
   "keywords": [],
   "author": "",

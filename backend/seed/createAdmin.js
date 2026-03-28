@@ -1,41 +1,32 @@
 import User from '../models/userModel.js';
-import bcrypt from 'bcryptjs';
 
+/**
+ * Default dashboard admin (documented credentials).
+ * Password must be PLAIN TEXT — userModel pre('save') hashes it once.
+ * (Pre-hashing here caused double-hash and permanent login failure.)
+ */
 const createAdmin = async () => {
   try {
-    // Check if admin already exists
-    const existingAdmin = await User.findOne({ email: 'admin@test.com' });
+    const email = 'admin@blacklocust.com';
+    const existing = await User.findOne({ email });
 
-    if (existingAdmin) {
-      console.log("✅ Admin user already exists");
-      return existingAdmin;
+    if (existing) {
+      console.log('✅ Admin already exists:', email);
+      return existing;
     }
 
-    // Hash the password
-    const hashedPassword = await bcrypt.hash("Admin@123", 10);
-
-    // Create admin user
-    const admin = await User.create({
-      name: "Admin User",
-      email: "admin@test.com",
-      password: hashedPassword,
-      role: "admin",
-      isEmailVerified: true,
-      isActive: true,
-      accountLocked: false,
-      loginAttempts: 0,
-      createdAt: new Date(),
-      updatedAt: new Date()
+    await User.create({
+      name: 'Admin User',
+      email,
+      password: 'admin123',
+      role: 'admin',
+      isActive: true
     });
 
-    console.log("🚀 Admin User Created Successfully");
-    console.log("📧 Email: admin@test.com");
-    console.log("🔑 Password: Admin@123");
-    console.log("🔐 Role: admin");
-
-    return admin;
+    console.log('🚀 Admin created:', email, '/ admin123');
+    return true;
   } catch (error) {
-    console.error("❌ Admin creation error:", error);
+    console.error('❌ Admin creation error:', error);
     throw error;
   }
 };
