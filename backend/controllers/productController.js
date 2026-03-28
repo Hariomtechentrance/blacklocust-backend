@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Product from "../models/Product.js";
 import Category from "../models/Category.js";
+import Collection from "../models/Collection.js";
 
 function escapeRegex(s) {
   return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -126,10 +127,31 @@ GET /api/products
 */
 export const getProductsSimple = async (req, res) => {
   try {
-    const { category, minPrice, maxPrice, sortBy, season } = req.query;
+    const { category, collection, minPrice, maxPrice, sortBy, season } = req.query;
     const search = typeof req.query.search === "string" ? req.query.search.trim() : "";
 
     const filters = [{ isActive: true }];
+
+    if (collection) {
+      const coll = String(collection).trim();
+      if (
+        mongoose.Types.ObjectId.isValid(coll) &&
+        String(new mongoose.Types.ObjectId(coll)) === coll
+      ) {
+        filters.push({ collection: coll });
+      } else {
+        const colDoc = await Collection.findOne({
+          slug: coll.toLowerCase(),
+        })
+          .select("_id")
+          .lean();
+        if (colDoc) {
+          filters.push({ collection: colDoc._id });
+        } else {
+          return res.json({ success: true, products: [] });
+        }
+      }
+    }
 
     if (category) {
       if (mongoose.Types.ObjectId.isValid(category) && String(new mongoose.Types.ObjectId(category)) === String(category)) {
