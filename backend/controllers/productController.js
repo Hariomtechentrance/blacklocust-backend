@@ -127,10 +127,38 @@ GET /api/products
 */
 export const getProductsSimple = async (req, res) => {
   try {
-    const { category, collection, minPrice, maxPrice, sortBy, season } = req.query;
+    const { category, collection, minPrice, maxPrice, sortBy, season, brand, sizes, colors } =
+      req.query;
     const search = typeof req.query.search === "string" ? req.query.search.trim() : "";
 
     const filters = [{ isActive: true }];
+
+    const truthy = (v) => v === true || v === "true" || v === "1";
+    if (truthy(req.query.isNewArrival)) filters.push({ isNewArrival: true });
+    if (truthy(req.query.isFeatured)) filters.push({ isFeatured: true });
+    if (truthy(req.query.isTrending)) filters.push({ isTrending: true });
+
+    if (brand && String(brand).trim()) {
+      filters.push({
+        brand: new RegExp(escapeRegex(String(brand).trim()), "i"),
+      });
+    }
+
+    if (sizes && String(sizes).trim()) {
+      const sizeArr = String(sizes)
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (sizeArr.length) filters.push({ "sizes.size": { $in: sizeArr } });
+    }
+
+    if (colors && String(colors).trim()) {
+      const colorArr = String(colors)
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (colorArr.length) filters.push({ colors: { $in: colorArr } });
+    }
 
     if (collection) {
       const coll = String(collection).trim();
@@ -198,9 +226,11 @@ export const getProductsSimple = async (req, res) => {
     let sort = { createdAt: -1 };
     if (sortBy === "price-asc" || sortBy === "price-low") sort = { price: 1 };
     else if (sortBy === "price-desc" || sortBy === "price-high") sort = { price: -1 };
-    else if (sortBy === "name") sort = { name: 1 };
+    else if (sortBy === "name" || sortBy === "name-asc") sort = { name: 1 };
+    else if (sortBy === "name-desc") sort = { name: -1 };
     else if (sortBy === "oldest") sort = { createdAt: 1 };
     else if (sortBy === "newest") sort = { createdAt: -1 };
+    else if (sortBy === "rating") sort = { rating: -1, numReviews: -1 };
 
     const products = await Product.find(query)
       .populate("category", "name slug")
