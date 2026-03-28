@@ -15,15 +15,29 @@ import userRoutes from './routes/userRoutes.js';
 import cartRoutes from './routes/cartRoutes.js';
 import collectionRoutes from './routes/collectionRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
+import storeOrderRoutes from './routes/storeOrderRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 
 const app = express();
 
 // CORS - MUST be first middleware
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://blacklocust-frontend.onrender.com",
+  "https://blacklocust.in",
+  "https://www.blacklocust.in"
+];
+
 app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:3000"],
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log("❌ Blocked by CORS:", origin);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
 }));
 
 // Remove problematic security middleware that might interfere
@@ -52,20 +66,34 @@ import createSuperAdmin from './utils/createSuperAdmin.js';
 import createAdmin from './seed/createAdmin.js';
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/blacklocust')
-  .then(async () => {
-    console.log('✅ MongoDB Connected');
+const connectDB = async () => {
+  try {
+    console.log("👉 MONGO_URI:", process.env.MONGO_URI); // DEBUG
+
+    const conn = await mongoose.connect(process.env.MONGO_URI);
+
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
     
     // Create super admin if none exists
     await createSuperAdmin();
     
     // Create admin if none exists
     await createAdmin();
-  })
-  .catch((error) => {
-    console.error('❌ MongoDB connection error:', error);
+  } catch (error) {
+    console.error("❌ MongoDB connection error:", error);
     process.exit(1);
-  });
+  }
+};
+
+const PORT = process.env.PORT || 5000;
+
+// Proper startup sequence - wait for DB before starting server
+const start = async () => {
+  await connectDB(); // wait for DB
+  startServer();     // then start server
+};
+
+start();
 
 // Essential Routes
 app.use('/api/products', productRoutes);
@@ -73,6 +101,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/collections', collectionRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/orders', storeOrderRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Serve uploaded files
 app.use('/uploads', express.static('uploads'));
@@ -122,21 +152,18 @@ app.get('/', (req, res) => {
         analytics: '/api/products/manage/analytics'
       },
       orders: {
-        create: '/api/orders/create',
-        list: '/api/orders/my-orders',
-        details: '/api/orders/:orderId',
-        cancel: '/api/orders/:orderId/cancel',
+        create: 'POST /api/orders',
+        list: 'GET /api/orders/my-orders',
+        details: 'GET /api/orders/:orderId',
+        cancel: 'PUT /api/orders/:orderId/cancel',
         track: '/api/orders/:orderId/track',
         'status-update': '/api/orders/:orderId/status',
         analytics: '/api/orders/analytics/summary'
       },
       payments: {
-        'create-intent': '/api/payments/create-intent',
-        confirm: '/api/payments/confirm',
-        'stripe-webhook': '/api/payments/stripe-webhook',
-        'razorpay-webhook': '/api/payments/razorpay-webhook',
-        refund: '/api/payments/refund',
-        methods: '/api/payments/methods'
+        'razorpay-key': 'GET /api/payments/razorpay/key',
+        'razorpay-order': 'POST /api/payments/razorpay/order',
+        'razorpay-verify': 'POST /api/payments/razorpay/verify'
       },
       analytics: {
         dashboard: '/api/analytics/dashboard',
@@ -178,58 +205,10 @@ app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-const PORT = process.env.PORT || 5000;
-
-// Check if port is already in use
-const checkPort = (port) => {
-  return new Promise((resolve, reject) => {
-    const server = net.createServer();
-    
-    server.once('error', (err) => {
-      if (err.code === 'EADDRINUSE') {
-        resolve(false); // Port is in use
-      } else {
-        reject(err);
-      }
-    });
-    
-    server.once('listening', () => {
-      server.close();
-      resolve(true); // Port is available
-    });
-    
-    server.listen(port);
+// Simple server startup - Render compatible
+const startServer = () => {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
   });
 };
-
-const startServer = async () => {
-  try {
-    const isPortAvailable = await checkPort(PORT);
-    
-    if (!isPortAvailable) {
-      console.log(`⚠️  Port ${PORT} is already in use. Attempting to kill existing process...`);
-      try {
-        execSync(`lsof -ti:${PORT} | xargs kill -9`, { stdio: 'ignore' });
-        console.log(`✅ Killed process on port ${PORT}`);
-      } catch (killError) {
-        console.log(`❌ Could not kill process on port ${PORT}. Trying alternative port...`);
-        // Try alternative port
-        const altPort = PORT + 1;
-        app.listen(altPort, () => {
-          console.log(`🚀 Server running on port ${altPort} (alternative)`);
-          console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
-        });
-        return;
-      }
-    }
-    
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-  }
-};
-
-startServer();

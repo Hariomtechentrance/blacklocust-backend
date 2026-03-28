@@ -24,9 +24,15 @@ export const register = async (req, res) => {
       phone
     });
 
+    const { accessToken, refreshToken } = generateAuthTokens(user._id);
+    const tokenExpiry = new Date(Date.now() + 14 * 60 * 1000).toISOString();
+
     res.status(201).json({
       success: true,
       message: 'Registration successful',
+      token: accessToken,
+      refreshToken,
+      tokenExpiry,
       user: {
         id: user._id,
         name: user.name,
@@ -73,11 +79,13 @@ export const login = async (req, res) => {
     }
 
     const { accessToken, refreshToken } = generateAuthTokens(user._id);
+    const tokenExpiry = new Date(Date.now() + 14 * 60 * 1000).toISOString();
 
     res.json({
       success: true,
       token: accessToken,
       refreshToken,
+      tokenExpiry,
       user: {
         id: user._id,
         name: user.name,
@@ -96,7 +104,7 @@ export const login = async (req, res) => {
 // GET PROFILE (✅ FIXED _id)
 export const getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user._id).select('-password');
 
     res.json({
       success: true,
@@ -152,30 +160,47 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-// @desc    Refresh token
+// @desc    Refresh access token
 // @route   POST /api/users/refresh-token
 // @access  Public
-export const refreshToken = async (req, res) => {
+export const refreshAccessToken = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    const incomingRefresh = req.body.refreshToken;
 
-    if (!refreshToken) {
+    if (!incomingRefresh) {
       return res.status(401).json({
         success: false,
         message: 'Refresh token required'
       });
     }
 
-    // This will be handled by the middleware
-    res.status(401).json({
-      success: false,
-      message: 'This endpoint is handled by middleware'
+    const decoded = jwt.verify(
+      incomingRefresh,
+      process.env.JWT_REFRESH_SECRET || 'fallback_refresh_secret'
+    );
+
+    const user = await User.findById(decoded.id);
+    if (!user || !user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid refresh token'
+      });
+    }
+
+    const { accessToken, refreshToken } = generateAuthTokens(user._id);
+    const tokenExpiry = new Date(Date.now() + 14 * 60 * 1000).toISOString();
+
+    res.json({
+      success: true,
+      token: accessToken,
+      refreshToken,
+      tokenExpiry
     });
   } catch (error) {
     console.error('Refresh token error:', error);
-    res.status(500).json({
+    res.status(401).json({
       success: false,
-      message: 'Server error'
+      message: 'Invalid or expired refresh token'
     });
   }
 };
@@ -429,7 +454,10 @@ export const resetPassword = async (req, res) => {
 // ADMIN LOGIN
 export const adminLogin = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = String(req.body.email || '')
+      .trim()
+      .toLowerCase();
+    const password = req.body.password;
 
     const user = await User.findOne({
       email,
@@ -453,11 +481,13 @@ export const adminLogin = async (req, res) => {
     }
 
     const { accessToken, refreshToken } = generateAuthTokens(user._id);
+    const tokenExpiry = new Date(Date.now() + 14 * 60 * 1000).toISOString();
 
     res.json({
       success: true,
       token: accessToken,
       refreshToken,
+      tokenExpiry,
       user: {
         id: user._id,
         name: user.name,

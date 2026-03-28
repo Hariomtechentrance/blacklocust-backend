@@ -1,26 +1,31 @@
 import Product from "../models/Product.js";
 import Cart from "../models/Cart.js";
 
+function getAvailableStock(product) {
+  if (typeof product.totalStock === "number") {
+    return product.totalStock;
+  }
+  return (product.sizes || []).reduce((sum, s) => sum + (s.stock || 0), 0);
+}
+
 // @desc    Add item to cart
 // @route   POST /api/cart/add
 // @access  Private
 export const addToCart = async (req, res) => {
   try {
-    console.log("🔥 ADD TO CART API HIT"); // 🔥 CRITICAL DEBUG
-    console.log("REQ BODY:", req.body); // 🔥 DEBUG LOG
     const { productId, quantity = 1, size, color } = req.body;
 
-    // Check if product exists and has sufficient stock
     const product = await Product.findById(productId);
     if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({ message: "Product not found" });
     }
 
-    if (product.stock < quantity) {
-      return res.status(400).json({ message: 'Insufficient stock' });
+    const stock = getAvailableStock(product);
+    if (stock < quantity) {
+      return res.status(400).json({ message: "Insufficient stock" });
     }
 
-    const userId = req.user._id; // 🔥 IMPORTANT: Get actual user ID from auth middleware
+    const userId = req.user._id;
 
     let cart = await Cart.findOne({ user: userId });
 
@@ -51,19 +56,21 @@ export const addToCart = async (req, res) => {
 
     await cart.save();
 
-    console.log("CART SAVED:", cart); // ✅ debug
-
-    // Populate cart with product details
-    await cart.populate('items.product', 'name price images stock');
+    await cart.populate("items.product", "name price images totalStock sizes");
 
     res.json({
       success: true,
-      message: 'Item added to cart',
+      message: "Item added to cart",
       cart: {
         items: cart.items,
-        totalItems: cart.items.length,
-        totalAmount: cart.items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
-      }
+        totalItems: cart.items.reduce((n, i) => n + i.quantity, 0),
+        totalAmount: cart.items.reduce(
+          (sum, item) =>
+            sum +
+            (item.product?.price || 0) * item.quantity,
+          0
+        ),
+      },
     });
   } catch (error) {
     console.log("CART ERROR:", error);
@@ -76,21 +83,23 @@ export const addToCart = async (req, res) => {
 // @access  Private
 export const getCart = async (req, res) => {
   try {
-    console.log("🔥 GET CART API HIT"); // 🔥 CRITICAL DEBUG
-    const userId = req.user._id; // 🔥 IMPORTANT: Get actual user ID from auth middleware
+    const userId = req.user._id;
 
-    const cart = await Cart.findOne({ user: userId })
-      .populate("items.product");
-
-    console.log("CART FROM DB:", cart); // Debug log
+    const cart = await Cart.findOne({ user: userId }).populate("items.product");
 
     res.json({
       success: true,
       cart: {
         items: cart?.items || [],
-        totalItems: cart?.items?.length || 0,
-        totalAmount: cart?.items?.reduce((sum, item) => sum + (item.product.price * item.quantity), 0) || 0
-      }
+        totalItems:
+          cart?.items?.reduce((n, i) => n + i.quantity, 0) || 0,
+        totalAmount:
+          cart?.items?.reduce(
+            (sum, item) =>
+              sum + (item.product?.price || 0) * item.quantity,
+            0
+          ) || 0,
+      },
     });
   } catch (error) {
     console.log("GET CART ERROR:", error);
@@ -98,69 +107,105 @@ export const getCart = async (req, res) => {
   }
 };
 
-// @desc    Update cart item quantity
-// @route   PUT /api/cart/:itemId
+// @desc    Update line quantity (matches frontend uniqueId via productId + size + color)
+// @route   PUT /api/cart/line
 // @access  Private
-export const updateCartItem = async (req, res) => {
+export const updateCartLine = async (req, res) => {
   try {
-    const { quantity } = req.body;
-    const { itemId } = req.params;
+    const { productId, size, color, quantity } = req.body;
 
-    const user = await User.findById(req.user._id);
-    const cartItem = user.cart.id(itemId);
-
-    if (!cartItem) {
-      return res.status(404).json({ message: 'Cart item not found' });
+    if (!productId || quantity < 1) {
+      return res.status(400).json({ success: false, message: "Invalid payload" });
     }
 
-    // Check product stock
-    const product = await Product.findById(cartItem.product);
-    if (product.stock < quantity) {
-      return res.status(400).json({ message: 'Insufficient stock' });
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
 
-    cartItem.quantity = quantity;
-    await user.save();
+    const stock = getAvailableStock(product);
+    if (stock < quantity) {
+      return res.status(400).json({ success: false, message: "Insufficient stock" });
+    }
 
-    await user.populate('cart.product', 'name price images stock');
-
-    res.json({
-      message: 'Cart updated',
-      cart: user.cart
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// @desc    Remove item from cart
-// @route   DELETE /api/cart/:itemId
-// @access  Private
-export const removeFromCart = async (req, res) => {
-  try {
-    const { itemId } = req.params;
-    const userId = req.user._id; // 🔥 IMPORTANT: Get actual user ID
-
-    // 🔥 SECURITY: Find cart by user ID and remove specific item
-    const cart = await Cart.findOne({ user: userId });
+    const cart = await Cart.findOne({ user: req.user._id });
     if (!cart) {
-      return res.status(404).json({ success: false, message: 'Cart not found' });
+      return res.status(404).json({ success: false, message: "Cart not found" });
     }
 
-    // Remove the item from the items array
-    cart.items = cart.items.filter(item => item._id.toString() !== itemId);
-    await cart.save();
+    const line = cart.items.find(
+      (item) =>
+        item.product.toString() === productId &&
+        item.size === size &&
+        item.color === color
+    );
 
-    await cart.populate('items.product', 'name price images stock');
+    if (!line) {
+      return res.status(404).json({ success: false, message: "Cart item not found" });
+    }
+
+    line.quantity = quantity;
+    await cart.save();
+    await cart.populate("items.product", "name price images totalStock sizes");
 
     res.json({
       success: true,
-      message: 'Item removed from cart',
+      message: "Cart updated",
       cart: {
         items: cart.items,
-        totalItems: cart.items.length,
-        totalAmount: cart.items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
-      }
+        totalItems: cart.items.reduce((n, i) => n + i.quantity, 0),
+        totalAmount: cart.items.reduce(
+          (sum, item) =>
+            sum + (item.product?.price || 0) * item.quantity,
+          0
+        ),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Remove line
+// @route   DELETE /api/cart/line
+// @access  Private
+export const removeCartLine = async (req, res) => {
+  try {
+    const { productId, size, color } = req.body;
+
+    if (!productId) {
+      return res.status(400).json({ success: false, message: "productId required" });
+    }
+
+    const cart = await Cart.findOne({ user: req.user._id });
+    if (!cart) {
+      return res.status(404).json({ success: false, message: "Cart not found" });
+    }
+
+    cart.items = cart.items.filter(
+      (item) =>
+        !(
+          item.product.toString() === productId &&
+          item.size === size &&
+          item.color === color
+        )
+    );
+
+    await cart.save();
+    await cart.populate("items.product", "name price images totalStock sizes");
+
+    res.json({
+      success: true,
+      message: "Item removed from cart",
+      cart: {
+        items: cart.items,
+        totalItems: cart.items.reduce((n, i) => n + i.quantity, 0),
+        totalAmount: cart.items.reduce(
+          (sum, item) =>
+            sum + (item.product?.price || 0) * item.quantity,
+          0
+        ),
+      },
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -172,50 +217,66 @@ export const removeFromCart = async (req, res) => {
 // @access  Private
 export const clearCart = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
-    user.cart = [];
-    await user.save();
+    const cart = await Cart.findOne({ user: req.user._id });
+    if (cart) {
+      cart.items = [];
+      await cart.save();
+    }
 
     res.json({
-      message: 'Cart cleared',
-      cart: []
+      success: true,
+      message: "Cart cleared",
+      cart: { items: [], totalItems: 0, totalAmount: 0 },
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// @desc    Get cart summary
+// @desc    Get cart summary (uses Cart model — same as storefront cart)
 // @route   GET /api/cart/summary
 // @access  Private
 export const getCartSummary = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id)
-      .populate('cart.product', 'price stock isActive');
+    const cart = await Cart.findOne({ user: req.user._id }).populate(
+      "items.product",
+      "price stock isActive totalStock sizes name images"
+    );
+
+    if (!cart || !cart.items.length) {
+      return res.json({
+        items: [],
+        subtotal: 0,
+        tax: 0,
+        shipping: 0,
+        total: 0,
+        totalItems: 0,
+      });
+    }
 
     let subtotal = 0;
     let totalItems = 0;
     const availableItems = [];
 
-    for (const cartItem of user.cart) {
-      if (cartItem.product && cartItem.product.isActive) {
-        const itemTotal = cartItem.product.price * cartItem.quantity;
+    for (const cartItem of cart.items) {
+      const p = cartItem.product;
+      if (p && p.isActive !== false) {
+        const itemTotal = p.price * cartItem.quantity;
         subtotal += itemTotal;
         totalItems += cartItem.quantity;
-        
         availableItems.push({
           _id: cartItem._id,
-          product: cartItem.product,
+          product: p,
           quantity: cartItem.quantity,
           size: cartItem.size,
           color: cartItem.color,
-          itemTotal
+          itemTotal,
         });
       }
     }
 
-    const tax = subtotal * 0.08; // 8% tax
-    const shipping = subtotal > 100 ? 0 : 10; // Free shipping over $100
+    const tax = subtotal * 0.08;
+    const shipping = subtotal > 100 ? 0 : 10;
     const total = subtotal + tax + shipping;
 
     res.json({
@@ -224,7 +285,7 @@ export const getCartSummary = async (req, res) => {
       tax,
       shipping,
       total,
-      totalItems
+      totalItems,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

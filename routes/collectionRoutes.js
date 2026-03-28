@@ -1,8 +1,27 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Collection from "../models/Collection.js";
 import Product from "../models/Product.js";
 
 const router = express.Router();
+
+/** Slug-only ids must not be passed as _id — Mongoose throws CastError → 500 */
+function isStrictObjectId(id) {
+  if (!id || typeof id !== 'string') return false;
+  return (
+    mongoose.Types.ObjectId.isValid(id) &&
+    String(new mongoose.Types.ObjectId(id)) === id
+  );
+}
+
+function collectionLookupFilter(identifier) {
+  const slug = String(identifier || '').trim().toLowerCase();
+  const conditions = [{ slug }];
+  if (isStrictObjectId(identifier)) {
+    conditions.push({ _id: identifier });
+  }
+  return { $or: conditions };
+}
 
 // Get all collections with filtering options
 router.get("/", async (req, res) => {
@@ -45,12 +64,9 @@ router.get("/:identifier", async (req, res) => {
     const { identifier } = req.params;
     
     // Try to find by slug first, then by ID
-    const collection = await Collection.findOne({
-      $or: [
-        { slug: identifier },
-        { _id: identifier }
-      ]
-    }).populate('parentCollection', 'name slug');
+    const collection = await Collection.findOne(
+      collectionLookupFilter(identifier)
+    ).populate('parentCollection', 'name slug');
     
     if (!collection) {
       return res.status(404).json({ error: 'Collection not found' });
@@ -66,20 +82,15 @@ router.get("/:identifier", async (req, res) => {
 router.get("/:identifier/products", async (req, res) => {
   try {
     const { identifier } = req.params;
-    const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+    const { page = 1, limit = 500, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
     
     // Find collection
-    const collection = await Collection.findOne({
-      $or: [
-        { slug: identifier },
-        { _id: identifier }
-      ]
-    });
-    
+    const collection = await Collection.findOne(collectionLookupFilter(identifier));
+
     if (!collection) {
       return res.status(404).json({ error: 'Collection not found' });
     }
-    
+
     // Build product query
     const query = { collection: collection._id, isActive: true };
     
@@ -142,6 +153,30 @@ router.post("/", async (req, res) => {
   }
 });
 
+// Reorder must be registered before PUT /:id so "reorder" is not treated as an id
+router.put("/reorder", async (req, res) => {
+  try {
+    const { orders } = req.body; // Expected format: [{ id: "collectionId", order: 1 }]
+
+    if (!Array.isArray(orders)) {
+      return res.status(400).json({ error: 'Orders must be an array' });
+    }
+
+    const updatePromises = orders.map(({ id, order }) =>
+      Collection.findByIdAndUpdate(id, { order }, { new: true })
+    );
+
+    await Promise.all(updatePromises);
+
+    res.json({
+      success: true,
+      message: 'Collections reordered successfully'
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Update collection
 router.put("/:id", async (req, res) => {
   try {
@@ -150,46 +185,22 @@ router.put("/:id", async (req, res) => {
       req.body,
       { new: true, runValidators: true }
     ).populate('parentCollection', 'name');
-    
+
     if (!collection) {
       return res.status(404).json({ error: 'Collection not found' });
     }
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       collection,
-      message: 'Collection updated successfully' 
+      message: 'Collection updated successfully'
     });
   } catch (err) {
     if (err.code === 11000) {
-      return res.status(400).json({ 
-        error: 'Collection with this name or slug already exists' 
+      return res.status(400).json({
+        error: 'Collection with this name or slug already exists'
       });
     }
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Reorder collections
-router.put("/reorder", async (req, res) => {
-  try {
-    const { orders } = req.body; // Expected format: [{ id: "collectionId", order: 1 }]
-    
-    if (!Array.isArray(orders)) {
-      return res.status(400).json({ error: 'Orders must be an array' });
-    }
-    
-    const updatePromises = orders.map(({ id, order }) =>
-      Collection.findByIdAndUpdate(id, { order }, { new: true })
-    );
-    
-    await Promise.all(updatePromises);
-    
-    res.json({ 
-      success: true, 
-      message: 'Collections reordered successfully' 
-    });
-  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
@@ -227,17 +238,12 @@ router.get("/:identifier/stats", async (req, res) => {
   try {
     const { identifier } = req.params;
     
-    const collection = await Collection.findOne({
-      $or: [
-        { slug: identifier },
-        { _id: identifier }
-      ]
-    });
-    
+    const collection = await Collection.findOne(collectionLookupFilter(identifier));
+
     if (!collection) {
       return res.status(404).json({ error: 'Collection not found' });
     }
-    
+
     const stats = await Product.aggregate([
       { $match: { collection: collection._id, isActive: true } },
       {

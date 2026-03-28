@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Product from "../models/Product.js";
 import Category from "../models/Category.js";
 
@@ -70,22 +71,69 @@ GET /api/products
 */
 export const getProductsSimple = async (req, res) => {
   try {
-    const { category } = req.query;
+    const { category, minPrice, maxPrice, search, sortBy, season } = req.query;
 
-    let query = { isActive: true };
+    const filters = [{ isActive: true }];
 
     if (category) {
-      query.category = category;
+      if (mongoose.Types.ObjectId.isValid(category) && String(new mongoose.Types.ObjectId(category)) === String(category)) {
+        filters.push({ category });
+      } else {
+        const catDoc = await Category.findOne({
+          $or: [
+            { name: new RegExp(`^${category}$`, "i") },
+            { slug: String(category).toLowerCase() }
+          ]
+        }).select("_id").lean();
+
+        if (catDoc) {
+          filters.push({ category: catDoc._id });
+        } else {
+          return res.json({ success: true, products: [] });
+        }
+      }
     }
 
-    const products = await Product.find(query)
-      .populate("category", "name")
-      .select("name description price category collection brand images sizes colors totalStock isFeatured isNewArrival isTrending rating numReviews tags material careInstructions isActive")
-      .lean()
-      .limit(50);
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      const range = {};
+      if (minPrice !== undefined && minPrice !== "") range.$gte = Number(minPrice);
+      if (maxPrice !== undefined && maxPrice !== "") range.$lte = Number(maxPrice);
+      filters.push({ price: range });
+    }
 
-    console.log('Backend - Products Query:', query); // 🔥 DEBUG LOG
-    console.log('Backend - Products Found:', products.length); // 🔥 DEBUG LOG
+    if (search) {
+      filters.push({
+        $or: [
+          { name: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } }
+        ]
+      });
+    }
+
+    if (season) {
+      filters.push({
+        $or: [
+          { tags: { $regex: season, $options: "i" } },
+          { name: { $regex: season, $options: "i" } }
+        ]
+      });
+    }
+
+    const query = filters.length === 1 ? filters[0] : { $and: filters };
+
+    let sort = { createdAt: -1 };
+    if (sortBy === "price-asc" || sortBy === "price-low") sort = { price: 1 };
+    else if (sortBy === "price-desc" || sortBy === "price-high") sort = { price: -1 };
+    else if (sortBy === "name") sort = { name: 1 };
+    else if (sortBy === "oldest") sort = { createdAt: 1 };
+    else if (sortBy === "newest") sort = { createdAt: -1 };
+
+    const products = await Product.find(query)
+      .populate("category", "name slug")
+      .select("name description price category collection brand images sizes colors totalStock isFeatured isNewArrival isTrending rating numReviews tags material careInstructions isActive createdAt")
+      .sort(sort)
+      .lean()
+      .limit(500);
 
     res.json({
       success: true,

@@ -1,30 +1,15 @@
-const express = require('express');
-const router = express.Router();
-const {
-  createPaymentIntent,
-  confirmPayment,
-  processRefund,
-  getPaymentMethods,
-  handleWebhook,
+import express from 'express';
+import {
   getRazorpayKey,
   createRazorpayOrder,
   verifyRazorpayPayment
-} = require('../controllers/paymentController');
-const { protect, authorize } = require('../middleware/auth');
+} from '../controllers/paymentController.js';
+import { protect } from '../middleware/auth.js';
 
-// Public routes
-router.post('/webhook', handleWebhook);
+const router = express.Router();
 
-// Protected routes
-router.post('/create-intent', protect, createPaymentIntent);
-router.post('/confirm', protect, confirmPayment);
-router.get('/methods', protect, getPaymentMethods);
-
-router.get('/razorpay/key', protect, getRazorpayKey);
+router.get('/razorpay/key', getRazorpayKey);
 router.post('/razorpay/order', protect, createRazorpayOrder);
 router.post('/razorpay/verify', protect, verifyRazorpayPayment);
 
-// Admin routes
-router.post('/refund', protect, authorize('admin'), processRefund);
-
-module.exports = router;
+export default router;

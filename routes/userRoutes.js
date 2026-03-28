@@ -14,7 +14,8 @@ import {
   verifyEmail,
   resendVerification,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  refreshAccessToken
 } from "../controllers/userController.js";
 
 import { protect, authorize } from "../middleware/auth.js";
@@ -36,6 +37,7 @@ const loginValidation = [
 // Routes
 router.post("/register", registerValidation, register);
 router.post("/login", loginValidation, login);
+router.post("/refresh-token", refreshAccessToken);
 router.post("/admin/login", loginValidation, adminLogin);
 
 router.get("/profile", protect, getProfile);
