@@ -1,17 +1,65 @@
 /*
  * Black Locust Fashion E-commerce Platform
- * Main Stylesheet
+ * Peter England Inspired Design System
  * 
- * This file contains global styles, animations, and utility classes
- * for the Black Locust fashion website.
+ * Premium men's fashion e-commerce with sophisticated styling
+ * Black background (#1a1a1a) with gold accents (#B8972E)
  * 
  * Author: Development Team
  * Created: 2024
  * Last Modified: 2024
  */
 
-/* Import CSS variables */
-@import './variables.css';
+/* Peter England Design System */
+:root {
+  /* Brand Colors */
+  --primary-black: #1a1a1a;
+  --primary-gold: #B8972E;
+  --gold-light: #D4AF37;
+  --gold-dark: #8B7500;
+  
+  /* Neutral Colors */
+  --white: #ffffff;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  
+  /* Typography */
+  --font-heading: 'Cormorant Garamond', serif;
+  --font-body: 'Roboto', sans-serif;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  --spacing-3xl: 4rem;
+  
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 0.25s cubic-bezier(0.19, 1, 0.22, 1);
+  --transition-slow: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
 /* Global reset and base styles */
 * {
@@ -37,10 +85,10 @@ html {
 }
 
 body {
-  font-family: 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Roboto', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   line-height: 1.6;
   color: #ffffff;
-  background-color: #000000;
+  background-color: #1a1a1a;
   overflow-x: hidden; /* Only prevent horizontal scroll */
   overflow-y: auto; /* Allow vertical scrolling */
   min-height: 100vh;
@@ -293,6 +341,34 @@ img {
 }
 
 /* Global Animations and Hover Effects */
+/* Peter England Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  color: var(--white);
+  margin: 0;
+  padding: 0;
+  line-height: 1.2;
+}
+
+h1 { font-size: 3rem; font-weight: 700; }
+h2 { font-size: 2.5rem; }
+h3 { font-size: 2rem; }
+h4 { font-size: 1.5rem; }
+h5 { font-size: 1.25rem; }
+h6 { font-size: 1rem; }
+
+p, span, div {
+  font-family: var(--font-body);
+  color: var(--white);
+}
+
+/* Peter England Animations */
+*, *::before, *::after {
+  animation-duration: 0.25s;
+  animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -463,19 +539,20 @@ input:hover, textarea:hover, select:hover {
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-/* App Container */
+/* App Container - Peter England Style */
 .App {
   width: 100%;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #000000;
-  color: #ffffff;
+  background-color: var(--primary-black);
+  color: var(--white);
   overflow-x: hidden;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   position: relative;
+  font-family: var(--font-body);
 }
 
 /* Utility Classes */
@@ -503,29 +580,69 @@ input:hover, textarea:hover, select:hover {
   background-color: var(--bg-light);
 }
 
-/* Loading Spinner */
-.loading-spinner-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 200px;
-  color: var(--text-dark);
+/* Peter England Button Styles */
+.btn-primary {
+  background-color: var(--primary-gold);
+  color: var(--white);
+  border: none;
+  padding: 0.75rem 2rem;
+  font-family: var(--font-body);
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-base);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.875rem;
 }
 
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(192, 147, 69, 0.3);
-  border-top: 4px solid var(--primary-color);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
+.btn-primary:hover {
+  background-color: var(--gold-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.btn-secondary {
+  background-color: transparent;
+  color: var(--white);
+  border: 1px solid var(--white);
+  padding: 0.75rem 2rem;
+  font-family: var(--font-body);
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-base);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.875rem;
+}
+
+.btn-secondary:hover {
+  background-color: var(--white);
+  color: var(--primary-black);
+  transform: translateY(-1px);
+}
+
+.btn-black {
+  background-color: var(--primary-black);
+  color: var(--white);
+  border: none;
+  padding: 1rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition-base);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.875rem;
+  width: 100%;
+}
+
+.btn-black:hover {
+  background-color: var(--gray-800);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
 }
 
 /* Toastify */
@@ -539,17 +656,18 @@ input:hover, textarea:hover, select:hover {
   color: var(--text-light);
 }
 
-/* Page Container */
+/* Page Container - Peter England Style */
 .page-container {
   width: 100%;
   min-height: 100vh;
-  background: #000000;
+  background: var(--primary-black);
   overflow-x: hidden;
   margin: 0;
   padding: 0;
-  color: #ffffff;
+  color: var(--white);
   box-sizing: border-box;
   position: relative;
+  font-family: var(--font-body);
 }
 
 /* Loading Screen */

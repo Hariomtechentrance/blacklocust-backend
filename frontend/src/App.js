@@ -12,12 +12,12 @@ import { StockProvider } from './context/StockContext';
 import { WishlistProvider } from './context/WishlistContext';
 
 // Components
-import Header from './components/Header/Header';
-import Footer from './components/Footer/Footer';
+import PeterEnglandHeader from './components/Header/PeterEnglandHeader';
+import PeterEnglandFooter from './components/Footer/PeterEnglandFooter';
 import PageLoader from './components/PageLoader/PageLoader';
 
 // Pages (Lazy)
-const HomePage = lazy(() => import('./pages/HomePage'));
+const PeterEnglandHomePage = lazy(() => import('./pages/PeterEnglandHomePage'));
 const ProductsPage = lazy(() => import('./pages/ProductsPage'));
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'));
 const CategoryPage = lazy(() => import('./pages/CategoryPage'));
@@ -43,12 +43,12 @@ const AppLayout = () => {
 
   return (
     <>
-      {!hideLayout && <Header />}
+      {!hideLayout && <PeterEnglandHeader />}
 
       <main>
         <Routes>
           {/* PUBLIC ROUTES */}
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<PeterEnglandHomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/admin/login" element={<AdminLogin />} />
@@ -96,7 +96,7 @@ const AppLayout = () => {
         </Routes>
       </main>
 
-      {!hideLayout && <Footer />}
+      {!hideLayout && <PeterEnglandFooter />}
     </>
   );
 };
