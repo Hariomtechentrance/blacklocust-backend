@@ -1,175 +1,193 @@
 .global-product-filters {
-  background: rgba(26, 26, 26, 0.95);
-  border: 1px solid rgba(192, 147, 69, 0.35);
-  border-radius: 12px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 1.5rem;
+  background: var(--bg-primary);
+  padding: 0;
 }
 
 .global-product-filters__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
+  display: none; /* We'll handle header in sidebar */
 }
 
-.global-product-filters__title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--gold, #c09345);
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-
-.global-product-filters__toggle {
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 0.85rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.global-product-filters__toggle:hover {
-  color: var(--gold, #c09345);
-}
-
-.global-product-filters__row--primary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 1rem;
-  align-items: flex-end;
-}
-
-.gpf-field {
+.gpf-expanded-content {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  flex: 1 1 140px;
-  min-width: 120px;
+  gap: 24px;
 }
 
-.gpf-field--narrow {
-  flex: 0 1 100px;
-  min-width: 90px;
+.gpf-section {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 24px;
 }
 
-.gpf-field span {
-  font-size: 0.75rem;
+.gpf-section:last-child {
+  border-bottom: none;
+}
+
+.gpf-section-title {
+  font-size: 14px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+  display: block;
 }
 
-.gpf-field select,
-.gpf-field input[type='text'],
-.gpf-field input[type='number'] {
-  padding: 0.5rem 0.65rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: #0a0a0a;
-  color: #fff;
-  font-size: 0.9rem;
-}
-
-.gpf-field select:focus,
-.gpf-field input:focus {
+/* Field Selects */
+.gpf-field select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: white;
+  color: var(--text-primary);
+  font-size: 14px;
   outline: none;
-  border-color: var(--gold, #c09345);
+  cursor: pointer;
 }
 
+.gpf-field select:focus {
+  border-color: var(--text-primary);
+}
+
+/* Checkbox Groups (Categories/Collections) */
+.gpf-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.gpf-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.gpf-checkbox-label:hover {
+  color: var(--text-primary);
+}
+
+.gpf-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--text-primary);
+}
+
+/* Size Grid */
+.gpf-size-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.gpf-size-btn {
+  padding: 8px 0;
+  border: 1px solid var(--border-color);
+  background: white;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition);
+  text-align: center;
+}
+
+.gpf-size-btn:hover {
+  border-color: var(--text-primary);
+}
+
+.gpf-size-btn.active {
+  background: var(--text-primary);
+  color: white;
+  border-color: var(--text-primary);
+}
+
+/* Color Swatches */
+.gpf-color-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.gpf-color-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  position: relative;
+  transition: var(--transition);
+}
+
+.gpf-color-swatch:hover {
+  transform: scale(1.2);
+}
+
+.gpf-color-swatch.active:after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  text-shadow: 0 0 2px rgba(0,0,0,0.5);
+}
+
+/* Price Range */
+.gpf-price-inputs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gpf-price-inputs input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 13px;
+  outline: none;
+}
+
+.gpf-price-separator {
+  color: var(--text-secondary);
+}
+
+/* Actions */
 .gpf-actions {
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  align-items: flex-end;
+  gap: 12px;
+  margin-top: 12px;
 }
 
-.gpf-btn {
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  cursor: pointer;
+.gpf-btn-apply {
+  flex: 1;
+  background: var(--btn-cta);
+  color: white;
+  padding: 12px;
   border: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.gpf-btn--primary {
-  background: linear-gradient(135deg, var(--gold, #c09345), #a67c30);
-  color: #111;
-}
-
-.gpf-btn--ghost {
-  background: transparent;
-  color: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.global-product-filters__expanded {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.gpf-chip-group {
-  margin-bottom: 1rem;
-}
-
-.gpf-chip-label {
-  display: block;
-  font-size: 0.75rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 13px;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.5);
-  margin-bottom: 0.5rem;
-}
-
-.gpf-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.gpf-chip {
-  padding: 0.35rem 0.65rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 0.8rem;
+  letter-spacing: 1px;
   cursor: pointer;
 }
 
-.gpf-chip.is-active {
-  background: rgba(192, 147, 69, 0.25);
-  border-color: var(--gold, #c09345);
-  color: var(--gold, #c09345);
-}
-
-@media (max-width: 768px) {
-  .global-product-filters__row--primary {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .gpf-field,
-  .gpf-field--narrow {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
-  .gpf-actions {
-    width: 100%;
-  }
-
-  .gpf-btn {
-    flex: 1;
-    justify-content: center;
-  }
+.gpf-btn-reset {
+  background: white;
+  color: var(--text-primary);
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
 }

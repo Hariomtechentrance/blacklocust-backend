@@ -1,25 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import ProductCard from '../components/Products/ProductCard';
-import AuthModal from '../components/AuthModal/AuthModal';
+import { FaFilter, FaSortAmountDown } from 'react-icons/fa';
+import ProductCard from '../components/Product/PeterEnglandProductCard';
 import GlobalProductFilters from '../components/GlobalProductFilters/GlobalProductFilters';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import api from '../api/axios';
 import { filtersToSearchParams, defaultProductFilterState } from '../utils/productFilters';
+import './ProductsPage.css';
 
 function ProductsPage() {
   const [searchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showAuth, setShowAuth] = useState(false);
   const [listFilters, setListFilters] = useState({ ...defaultProductFilterState });
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const { isAuthenticated, loading: authLoading } = useAuth();
   const { addToCart } = useCart();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get('/categories?active=true');
+      setCategories(res.data?.categories || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     const cat = searchParams.get('category') || '';
@@ -65,81 +80,9 @@ function ProductsPage() {
     const collection = searchParams.get('collection');
     const category = searchParams.get('category');
 
-    if (collection) {
-      return collection
-        .split('-')
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-    }
-    if (category) {
-      return category
-        .split('-')
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-    }
-
-    return 'All Products';
-  };
-
-  const handleAddToCart = (product) => {
-    if (authLoading) return;
-    if (!isAuthenticated) {
-      setShowAuth(true);
-      return;
-    }
-    addToCart(product, 1, undefined, undefined);
-  };
-
-  const handleQuickView = (product) => {
-    navigate(`/product/${product.id || product._id}`);
-  };
-
-  const handleAddToWishlist = (product) => {
-    if (!isAuthenticated) {
-      setShowAuth(true);
-      return;
-    }
-    const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-    const exists = wishlist.find((item) => item.id === (product.id || product._id));
-
-    if (!exists) {
-      wishlist.push({
-        id: product.id || product._id,
-        name: product.name,
-        price: product.price,
-        image: product.images?.[0] || product.image,
-        category: product.category,
-        addedAt: new Date().toISOString(),
-      });
-      localStorage.setItem('wishlist', JSON.stringify(wishlist));
-      toast.success(`${product.name} added to wishlist!`);
-    } else {
-      const updatedWishlist = wishlist.filter((item) => item.id !== (product.id || product._id));
-      localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
-      toast.success(`${product.name} removed from wishlist!`);
-    }
-  };
-
-  const handleCompare = (product) => {
-    const compare = JSON.parse(localStorage.getItem('compare') || '[]');
-    if (compare.length < 4) {
-      const exists = compare.find((item) => item.id === (product.id || product._id));
-      if (!exists) {
-        compare.push({
-          id: product.id || product._id,
-          name: product.name,
-          price: product.price,
-          image: product.images?.[0] || product.image,
-          category: product.category,
-        });
-        localStorage.setItem('compare', JSON.stringify(compare));
-        toast.success(`${product.name} added to compare!`);
-      } else {
-        toast.info('Product already in compare list!');
-      }
-    } else {
-      toast.error('You can compare up to 4 products at a time!');
-    }
+    if (collection) return collection.replace(/-/g, ' ').toUpperCase();
+    if (category) return category.replace(/-/g, ' ').toUpperCase();
+    return 'ALL PRODUCTS';
   };
 
   const initialFilterSync = {
@@ -148,107 +91,118 @@ function ProductsPage() {
   };
 
   return (
-    <div className="bg-black pt-[76px] text-white">
-      <div className="bl-container py-8 md:py-10 lg:py-14">
-        <header className="mb-8 flex flex-col gap-3 md:mb-10 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h1 className="font-heading text-3xl font-semibold text-white md:text-4xl">
-              {getPageTitle()}
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm text-white/60">
-              {searchParams.get('collection') || searchParams.get('category')
-                ? `Browse our ${getPageTitle().toLowerCase()} edit of premium fashion essentials.`
-                : 'Explore the complete Blacklocust range for Men and Kids.'}
-            </p>
+    <div className="plp-page">
+      {/* Category Chips - Snitch/Peter England style */}
+      <div className="category-chips-container border-b border-gray-100 py-6 bg-white sticky top-20 z-30">
+        <div className="container">
+          <div className="flex items-center gap-4 overflow-x-auto no-scrollbar">
+            <button 
+              className={`chip ${!listFilters.category ? 'active' : ''}`}
+              onClick={() => setListFilters(prev => ({ ...prev, category: '' }))}
+            >
+              ALL
+            </button>
+            {categories.map(cat => (
+              <button 
+                key={cat._id}
+                className={`chip ${listFilters.category === cat.slug ? 'active' : ''}`}
+                onClick={() => setListFilters(prev => ({ ...prev, category: cat.slug }))}
+              >
+                {cat.name.toUpperCase()}
+              </button>
+            ))}
           </div>
-          <p className="text-xs font-semibold tracking-[0.18em] text-white/50">
-            {loading ? 'LOADING PRODUCTS…' : `${products.length} ITEMS`}
-          </p>
+        </div>
+      </div>
+
+      <div className="container pt-8">
+        {/* Header */}
+        <header className="plp-header text-left flex justify-between items-end mb-10">
+          <div>
+            <h1 className="plp-title-small font-black tracking-widest text-2xl uppercase mb-2">{getPageTitle()}</h1>
+            <span className="item-count-text text-xs font-bold text-gray-400 uppercase tracking-widest">{products.length} Items found</span>
+          </div>
+          
+          {/* Filter Trigger - Peter England Style */}
+          <div className="flex gap-4">
+            <button 
+              className="flex items-center gap-2 px-6 py-3 border border-gray-200 text-[10px] font-bold tracking-[0.2em] uppercase hover:border-black transition-all"
+              onClick={() => setIsFilterOpen(true)}
+            >
+              <FaFilter size={12} /> FILTER
+            </button>
+            <div className="hidden lg:block">
+              <select 
+                className="px-6 py-3 border border-gray-200 text-[10px] font-bold tracking-[0.2em] uppercase bg-white outline-none cursor-pointer"
+                value={listFilters.sortBy}
+                onChange={(e) => setListFilters(prev => ({ ...prev, sortBy: e.target.value }))}
+              >
+                <option value="newest">NEWEST FIRST</option>
+                <option value="price-low">PRICE: LOW TO HIGH</option>
+                <option value="price-high">PRICE: HIGH TO LOW</option>
+                <option value="rating">POPULARITY</option>
+              </select>
+            </div>
+          </div>
         </header>
 
-        <div className="grid gap-8 lg:grid-cols-[280px,minmax(0,1fr)]">
-          {/* Filters sidebar */}
-          <aside className="space-y-4">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:p-5">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xs font-semibold tracking-[0.18em] text-white/80">
-                  FILTERS
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => setListFilters({ ...defaultProductFilterState })}
-                  className="text-[11px] font-semibold tracking-[0.16em] text-white/40 hover:text-white/70"
-                >
-                  CLEAR
-                </button>
+        <div className="plp-layout-modern">
+          {/* Filter Sidebar - Now a Slide-out Drawer */}
+          <div className={`filter-drawer ${isFilterOpen ? 'open' : ''}`}>
+            <div className="filter-drawer-overlay" onClick={() => setIsFilterOpen(false)}></div>
+            <div className="filter-drawer-content">
+              <div className="drawer-header p-6 border-b border-gray-100 flex justify-between items-center">
+                <h3 className="font-black tracking-widest uppercase text-sm">Filters</h3>
+                <button onClick={() => setIsFilterOpen(false)} className="text-xl">&times;</button>
               </div>
-              <GlobalProductFilters
-                key={`${initialFilterSync.category}-${initialFilterSync.collection}`}
-                initialFilters={initialFilterSync}
-                onApply={setListFilters}
-              />
+              <div className="drawer-body p-6">
+                <GlobalProductFilters
+                  key={`${initialFilterSync.category}-${initialFilterSync.collection}`}
+                  initialFilters={initialFilterSync}
+                  onApply={(filters) => {
+                    setListFilters(filters);
+                    setIsFilterOpen(false);
+                  }}
+                />
+              </div>
             </div>
-          </aside>
+          </div>
 
-          {/* Products grid */}
-          <section>
+          {/* Main Content */}
+          <main className="plp-main-wide">
             {loading ? (
-              <div className="flex min-h-[240px] flex-col items-center justify-center gap-4 rounded-2xl border border-white/10 bg-white/5">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-blacklocust-gold" />
-                <p className="text-sm text-white/70">Loading products…</p>
+              <div className="plp-loader">
+                <div className="spinner"></div>
               </div>
             ) : error ? (
-              <div className="rounded-2xl border border-red-500/40 bg-red-500/10 p-6">
-                <h3 className="font-heading text-xl text-white">Error Loading Products</h3>
-                <p className="mt-2 text-sm text-white/70">{error}</p>
-                <button
-                  type="button"
-                  onClick={() => setListFilters((f) => ({ ...f }))}
-                  className="mt-4 rounded-full border border-white/20 px-4 py-2 text-xs font-semibold tracking-[0.16em] text-white/80 hover:border-blacklocust-gold hover:text-blacklocust-gold"
-                >
-                  TRY AGAIN
-                </button>
+              <div className="plp-error">
+                <p>{error}</p>
+                <button onClick={() => window.location.reload()}>Retry</button>
               </div>
             ) : products.length > 0 ? (
-              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8">
                 {products.map((item) => (
                   <ProductCard
                     key={item._id || item.id}
                     product={item}
-                    onAddToCart={handleAddToCart}
-                    onQuickView={handleQuickView}
-                    onAddToWishlist={handleAddToWishlist}
-                    onCompare={handleCompare}
                   />
                 ))}
               </div>
             ) : (
-              <div className="flex min-h-[240px] flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
-                <h3 className="font-heading text-xl text-white">No products found</h3>
-                <p className="mt-2 max-w-md text-sm text-white/70">
-                  Try adjusting your filters or explore all products to discover more from Blacklocust.
-                </p>
-                <button
-                  type="button"
+              <div className="plp-empty">
+                <h3 className="font-bold uppercase tracking-widest">No products found</h3>
+                <p className="text-gray-400 mt-2">Try adjusting your filters to find what you're looking for.</p>
+                <button 
+                  className="mt-8 px-10 py-4 bg-black text-white text-xs font-bold tracking-widest"
                   onClick={() => setListFilters({ ...defaultProductFilterState })}
-                  className="mt-4 rounded-full border border-white/20 px-4 py-2 text-xs font-semibold tracking-[0.16em] text-white/80 hover:border-blacklocust-gold hover:text-blacklocust-gold"
                 >
                   RESET FILTERS
                 </button>
               </div>
             )}
-          </section>
+          </main>
         </div>
       </div>
-
-      {showAuth && (
-        <AuthModal
-          isOpen={showAuth}
-          onClose={() => setShowAuth(false)}
-          onLogin={() => navigate('/login')}
-          onRegister={() => navigate('/register')}
-        />
-      )}
     </div>
   );
 }

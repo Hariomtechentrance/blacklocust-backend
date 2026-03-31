@@ -24,9 +24,15 @@ async function getOrCreateCategory(categoryName) {
 
 // Function to get collection by name
 async function getCollectionByName(collectionName) {
-  const collection = await Collection.findOne({ name: collectionName });
+  let collection = await Collection.findOne({ name: collectionName });
   if (!collection) {
-    throw new Error(`Collection not found: ${collectionName}`);
+    collection = new Collection({
+      name: collectionName,
+      slug: collectionName.toLowerCase().replace(/\s+/g, '-'),
+      description: `${collectionName} collection`,
+      image: 'https://via.placeholder.com/300x200/333/fff?text=' + encodeURIComponent(collectionName)
+    });
+    await collection.save();
   }
   return collection._id;
 }

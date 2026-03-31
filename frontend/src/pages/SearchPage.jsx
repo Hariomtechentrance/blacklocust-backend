@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import ProductCard from '../components/Products/ProductCard';
-import '../components/Products/Products.css';
+import ProductCard from '../components/Product/PeterEnglandProductCard';
 import './SearchPage.css';
 
 import { useAuth } from '../context/AuthContext';

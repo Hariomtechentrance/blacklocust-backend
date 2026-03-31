@@ -1,11 +1,11 @@
-const express = require('express');
-const rateLimit = require('express-rate-limit');
-const mongoSanitize = require('express-mongo-sanitize');
-const hpp = require('hpp');
-const helmet = require('helmet');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
+import express from 'express';
+import rateLimit from 'express-rate-limit';
+import mongoSanitize from 'express-mongo-sanitize';
+import hpp from 'hpp';
+import helmet from 'helmet';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 // Enhanced security configuration
 const securityConfig = {
@@ -323,7 +323,7 @@ const setupSecurity = (app) => {
   app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 };
 
-module.exports = {
+export {
   setupSecurity,
   securityConfig,
   validatePassword,

@@ -1,200 +1,156 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaArrowRight } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+
+const slides = [
+  {
+    id: 1,
+    title: "The Wedding Edition",
+    subtitle: "NEW ARRIVALS",
+    description: "Discover our exclusive range of premium wedding wear designed for the modern gentleman",
+    image: "https://images.unsplash.com/photo-1594932224828-b4b05a832fe3?w=1600&q=80",
+    ctaText: "SHOP NOW",
+    ctaLink: "/products?collection=wedding"
+  },
+  {
+    id: 2,
+    title: "Business Essentials",
+    subtitle: "OFFICE WEAR",
+    description: "Elevate your professional wardrobe with our tailored office collection",
+    image: "https://images.unsplash.com/photo-1490114538077-0a7f8cb49891?w=1600&q=80",
+    ctaText: "EXPLORE COLLECTION",
+    ctaLink: "/products?collection=office"
+  },
+  {
+    id: 3,
+    title: "The Weekend Vibe",
+    subtitle: "CASUAL WEAR",
+    description: "Premium casual shirts and chinos for your relaxed weekend looks",
+    image: "https://images.unsplash.com/photo-1516257984877-a03a01ae1b89?w=1600&q=80",
+    ctaText: "DISCOVER MORE",
+    ctaLink: "/products?collection=casual"
+  },
+  {
+    id: 4,
+    title: "Junior Style",
+    subtitle: "KIDS COLLECTION",
+    description: "Comfortable and stylish outfits for young trendsetters",
+    image: "https://images.unsplash.com/photo-1519457431-7571f018272b?w=1600&q=80",
+    ctaText: "SHOP KIDS",
+    ctaLink: "/products?category=Kids"
+  },
+  {
+    id: 5,
+    title: "Summer Breeze",
+    subtitle: "LIMITED EDITION",
+    description: "Stay cool and stylish with our breathable linen collection",
+    image: "https://images.unsplash.com/photo-1523381235200-62947558d447?w=1600&q=80",
+    ctaText: "SHOP SUMMER",
+    ctaLink: "/products?collection=summer"
+  }
+];
 
 const PeterEnglandHero = () => {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-
-  // Hero slides data - using your product collections
-  const slides = [
-    {
-      id: 1,
-      title: "PREMIUM SHIRTS COLLECTION",
-      subtitle: "Elevate Your Wardrobe",
-      description: "Discover our exclusive range of premium cotton shirts designed for the modern gentleman",
-      image: "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=1440&h=600&fit=crop&crop=entropy",
-      ctaText: "SHOP NOW",
-      ctaLink: "/collection/office-collection"
-    },
-    {
-      id: 2,
-      title: "CHECKED PATTERNS",
-      subtitle: "Timeless Style",
-      description: "Classic checked shirts that never go out of fashion, perfect for every occasion",
-      image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=1440&h=600&fit=crop&crop=entropy",
-      ctaText: "EXPLORE COLLECTION",
-      ctaLink: "/collection/checked-collection"
-    },
-    {
-      id: 3,
-      title: "PARTY WEAR ESSENTIALS",
-      subtitle: "Make an Impression",
-      description: "Stand out at any event with our sophisticated party wear collection",
-      image: "https://images.unsplash.com/photo-1620012253295-c15cc3e65df4?w=1440&h=600&fit=crop&crop=entropy",
-      ctaText: "DISCOVER MORE",
-      ctaLink: "/collection/party-wear-collection"
-    },
-    {
-      id: 4,
-      title: "DENIM CLASSICS",
-      subtitle: "Casual Excellence",
-      description: "Premium denim jeans and jackets for the perfect casual look",
-      image: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=1440&h=600&fit=crop&crop=entropy",
-      ctaText: "SHOP DENIM",
-      ctaLink: "/collection/denim"
-    }
-  ];
+  const [current, setCurrent] = useState(0);
 
   useEffect(() => {
-    if (!isAutoPlaying) return;
+    const timer = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
 
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 4000); // 4 second intervals
-
-    return () => clearInterval(interval);
-  }, [isAutoPlaying, slides.length]);
-
-  const goToSlide = (index) => {
-    setCurrentSlide(index);
-    setIsAutoPlaying(false);
-  };
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-    setIsAutoPlaying(false);
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-    setIsAutoPlaying(false);
-  };
+  const next = () => setCurrent((prev) => (prev + 1) % slides.length);
+  const prev = () => setCurrent((prev) => (prev - 1 + slides.length) % slides.length);
 
   return (
-    <div className="relative w-full h-[450px] lg:h-[600px] overflow-hidden bg-[#1a1a1a]">
-      {/* Slides Container */}
-      <div className="relative h-full">
-        {slides.map((slide, index) => (
-          <div
-            key={slide.id}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-              index === currentSlide ? 'opacity-100' : 'opacity-0'
-            }`}
-          >
-            {/* Background Image */}
-            <div 
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: `url(${slide.image})` }}
-            />
-            
-            {/* Dark Overlay */}
-            <div className="absolute inset-0 bg-black/40" />
-            
-            {/* Content */}
-            <div className="absolute inset-0 flex items-center">
-              <div className="container mx-auto px-4 lg:px-8">
-                <div className="max-w-2xl">
-                  <div className="space-y-4 lg:space-y-6">
-                    {/* Subtitle */}
-                    <p 
-                      className="text-sm lg:text-base uppercase tracking-widest text-white/80"
-                      style={{ fontFamily: 'Roboto, sans-serif' }}
-                    >
-                      {slide.subtitle}
-                    </p>
-                    
-                    {/* Main Title */}
-                    <h1 
-                      className="text-3xl lg:text-5xl xl:text-6xl font-bold leading-tight text-white"
-                      style={{ fontFamily: 'Cormorant Garamond, serif' }}
-                    >
-                      {slide.title}
-                    </h1>
-                    
-                    {/* Description */}
-                    <p 
-                      className="text-base lg:text-lg text-white/90 max-w-lg"
-                      style={{ fontFamily: 'Roboto, sans-serif' }}
-                    >
-                      {slide.description}
-                    </p>
-                    
-                    {/* CTA Button */}
-                    <Link
-                      to={slide.ctaLink}
-                      className="inline-flex items-center gap-3 px-8 py-4 bg-[#B8972E] text-white font-semibold uppercase tracking-wider text-sm hover:bg-[#8B7500] transition-all duration-300 transform hover:translate-y-[-2px] hover:shadow-xl"
-                      style={{ fontFamily: 'Roboto, sans-serif' }}
-                    >
-                      {slide.ctaText}
-                      <FaArrowRight />
-                    </Link>
-                  </div>
-                </div>
+    <div className="relative w-full h-[400px] lg:h-[700px] overflow-hidden group">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={current}
+          initial={{ opacity: 0, scale: 1.1 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="absolute inset-0"
+        >
+          <div 
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${slides[current].image})` }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/10 to-transparent" />
+          
+          <div className="absolute inset-0 flex items-center">
+            <div className="container mx-auto px-8 lg:px-16">
+              <div className="max-w-xl text-white">
+                <motion.span
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="block text-sm lg:text-base font-bold tracking-[0.3em] uppercase mb-4 text-[#C19A6B]"
+                >
+                  {slides[current].subtitle}
+                </motion.span>
+                <motion.h1
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-4xl lg:text-7xl font-bold mb-6 leading-[1.1]"
+                  style={{ fontFamily: 'Playfair Display, serif' }}
+                >
+                  {slides[current].title}
+                </motion.h1>
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 }}
+                  className="text-lg lg:text-xl mb-10 text-gray-100/90 max-w-lg font-light leading-relaxed"
+                >
+                  {slides[current].description}
+                </motion.p>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.9 }}
+                >
+                  <Link 
+                    to={slides[current].ctaLink}
+                    className="inline-block px-10 py-4 bg-black text-white text-sm font-bold tracking-widest uppercase hover:bg-[#C19A6B] transition-all duration-300"
+                  >
+                    {slides[current].ctaText}
+                  </Link>
+                </motion.div>
               </div>
             </div>
           </div>
-        ))}
-      </div>
+        </motion.div>
+      </AnimatePresence>
 
       {/* Navigation Arrows */}
-      <button
-        type="button"
-        onClick={prevSlide}
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-12 h-12 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 transition-all duration-300 rounded-full"
-        aria-label="Previous slide"
+      <button 
+        onClick={prev}
+        className="absolute left-8 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center bg-white/10 backdrop-blur-md text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white hover:text-black"
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
+        <FaChevronLeft />
+      </button>
+      <button 
+        onClick={next}
+        className="absolute right-8 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center bg-white/10 backdrop-blur-md text-white rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white hover:text-black"
+      >
+        <FaChevronRight />
       </button>
 
-      <button
-        type="button"
-        onClick={nextSlide}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-12 h-12 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 transition-all duration-300 rounded-full"
-        aria-label="Next slide"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-
-      {/* Slide Indicators */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center space-x-2">
-        {slides.map((_, index) => (
+      {/* Indicators */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3">
+        {slides.map((_, i) => (
           <button
-            key={index}
-            type="button"
-            onClick={() => goToSlide(index)}
-            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              index === currentSlide
-                ? 'w-8 bg-[#B8972E]'
-                : 'bg-white/40 hover:bg-white/60'
-            }`}
-            aria-label={`Go to slide ${index + 1}`}
+            key={i}
+            onClick={() => setCurrent(i)}
+            className={`h-1.5 transition-all duration-300 ${current === i ? 'w-10 bg-[#C19A6B]' : 'w-4 bg-white/40'}`}
           />
         ))}
       </div>
-
-      {/* Auto-play Toggle */}
-      <button
-        type="button"
-        onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-        className="absolute bottom-6 right-6 z-10 flex items-center justify-center w-10 h-10 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 transition-all duration-300 rounded-full text-xs"
-        aria-label={isAutoPlaying ? 'Pause' : 'Play'}
-      >
-        {isAutoPlaying ? (
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <rect x="6" y="4" width="4" height="16" />
-            <rect x="14" y="4" width="4" height="16" />
-          </svg>
-        ) : (
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M8 5v14l11-7z" />
-          </svg>
-        )}
-      </button>
     </div>
   );
 };

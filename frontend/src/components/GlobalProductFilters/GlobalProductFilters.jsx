@@ -1,96 +1,43 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { FaFilter, FaTimes, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import api from '../../api/axios';
 import { defaultProductFilterState } from '../../utils/productFilters';
 import './GlobalProductFilters.css';
 
-const SIZE_OPTIONS = ['S', 'M', 'L', 'XL', 'XXL', '28', '30', '32', '34', '36', '38', '40'];
+const SIZE_OPTIONS = ['S', 'M', 'L', 'XL', 'XXL'];
 const COLOR_OPTIONS = [
-  'Black',
-  'White',
-  'Gray',
-  'Navy',
-  'Blue',
-  'Red',
-  'Green',
-  'Brown',
-  'Beige',
-  'Pink',
-  'Khaki',
-  'Olive',
+  { name: 'Black', hex: '#000000' },
+  { name: 'White', hex: '#FFFFFF' },
+  { name: 'Gray', hex: '#808080' },
+  { name: 'Navy', hex: '#000080' },
+  { name: 'Blue', hex: '#0000FF' },
+  { name: 'Red', hex: '#FF0000' },
+  { name: 'Gold', hex: '#C19A6B' },
 ];
 
 const SORT_OPTIONS = [
-  { value: 'featured', label: 'Featured / Latest' },
-  { value: 'newest', label: 'Newest first' },
-  { value: 'oldest', label: 'Oldest first' },
-  { value: 'price-low', label: 'Price: Low to high' },
-  { value: 'price-high', label: 'Price: High to low' },
-  { value: 'rating', label: 'Highest rated' },
-  { value: 'name-asc', label: 'Name: A–Z' },
-  { value: 'name-desc', label: 'Name: Z–A' },
+  { value: 'newest', label: 'Newest First' },
+  { value: 'price-low', label: 'Price: Low to High' },
+  { value: 'price-high', label: 'Price: High to Low' },
+  { value: 'rating', label: 'Customer Rating' },
 ];
 
-/**
- * Shared filters for listing pages (New Arrivals, Shop Collections, All Products, menu collections).
- * Calls onApply with a plain filter object whenever user clicks Apply (parent merges preset and fetches).
- */
-const GlobalProductFilters = ({
-  onApply,
-  hideCategory = false,
-  hideCollection = false,
-  initialFilters = null,
-  className = '',
-}) => {
-  const [expanded, setExpanded] = useState(false);
+const GlobalProductFilters = ({ onApply, initialFilters = null }) => {
   const [categories, setCategories] = useState([]);
-  const [collections, setCollections] = useState([]);
   const [form, setForm] = useState(() => ({ ...defaultProductFilterState, ...initialFilters }));
 
   useEffect(() => {
-    if (initialFilters && typeof initialFilters === 'object') {
-      setForm((prev) => ({ ...prev, ...initialFilters }));
-    }
-  }, [initialFilters]);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const [catRes, colRes] = await Promise.all([
-          api.get('/categories?active=true').catch(() => ({ data: {} })),
-          api.get('/collections?isActive=true').catch(() => ({ data: {} })),
-        ]);
-        if (cancelled) return;
-        const catList = catRes.data?.data || catRes.data?.categories || [];
-        setCategories(Array.isArray(catList) ? catList : []);
-        const cols = colRes.data?.collections || [];
-        setCollections(Array.isArray(cols) ? cols : []);
-      } catch {
-        if (!cancelled) {
-          setCategories([]);
-          setCollections([]);
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    fetchCategories();
   }, []);
 
-  const categoryOptions = useMemo(() => {
-    return categories.map((c) => ({
-      value: c.slug || c._id,
-      label: c.name || c.slug || 'Category',
-    }));
-  }, [categories]);
-
-  const collectionOptions = useMemo(() => {
-    return collections.map((c) => ({
-      value: c.slug || c._id,
-      label: c.name || c.slug || 'Collection',
-    }));
-  }, [collections]);
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get('/categories?active=true');
+      const catList = res.data?.data || res.data?.categories || [];
+      setCategories(catList);
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+    }
+  };
 
   const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
@@ -102,158 +49,103 @@ const GlobalProductFilters = ({
     });
   };
 
-  const handleApply = () => {
-    onApply?.({ ...form });
-  };
-
+  const handleApply = () => onApply(form);
   const handleReset = () => {
-    const next = { ...defaultProductFilterState };
-    if (hideCategory && initialFilters?.category) next.category = initialFilters.category;
-    if (hideCollection && initialFilters?.collection) next.collection = initialFilters.collection;
-    setForm(next);
-    onApply?.(next);
+    const reset = { ...defaultProductFilterState };
+    setForm(reset);
+    onApply(reset);
   };
 
   return (
-    <div className={`global-product-filters ${className}`.trim()}>
-      <div className="global-product-filters__header">
-        <span className="global-product-filters__title">
-          <FaFilter aria-hidden /> Filters
-        </span>
-        <button
-          type="button"
-          className="global-product-filters__toggle"
-          onClick={() => setExpanded(!expanded)}
-          aria-expanded={expanded}
-        >
-          {expanded ? (
-            <>
-              Hide <FaChevronUp />
-            </>
-          ) : (
-            <>
-              Show all <FaChevronDown />
-            </>
-          )}
-        </button>
-      </div>
+    <div className="global-product-filters">
+      <div className="gpf-expanded-content">
+        {/* Sort */}
+        <div className="gpf-section">
+          <label className="gpf-section-title">Sort By</label>
+          <div className="gpf-field">
+            <select value={form.sortBy} onChange={(e) => setField('sortBy', e.target.value)}>
+              {SORT_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-      <div className="global-product-filters__row global-product-filters__row--primary">
-        {!hideCategory && (
-          <label className="gpf-field">
-            <span>Category</span>
-            <select
-              value={form.category}
-              onChange={(e) => setField('category', e.target.value)}
-            >
-              <option value="">All categories</option>
-              {categoryOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        {!hideCollection && (
-          <label className="gpf-field">
-            <span>Collection</span>
-            <select
-              value={form.collection}
-              onChange={(e) => setField('collection', e.target.value)}
-            >
-              <option value="">All collections</option>
-              {collectionOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        <label className="gpf-field">
-          <span>Brand</span>
-          <input
-            type="text"
-            value={form.brand}
-            onChange={(e) => setField('brand', e.target.value)}
-            placeholder="e.g. Black Locust"
-          />
-        </label>
-        <label className="gpf-field gpf-field--narrow">
-          <span>Min ₹</span>
-          <input
-            type="number"
-            min={0}
-            value={form.minPrice}
-            onChange={(e) => setField('minPrice', e.target.value)}
-            placeholder="0"
-          />
-        </label>
-        <label className="gpf-field gpf-field--narrow">
-          <span>Max ₹</span>
-          <input
-            type="number"
-            min={0}
-            value={form.maxPrice}
-            onChange={(e) => setField('maxPrice', e.target.value)}
-            placeholder="Any"
-          />
-        </label>
-        <label className="gpf-field">
-          <span>Sort</span>
-          <select value={form.sortBy} onChange={(e) => setField('sortBy', e.target.value)}>
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
+        {/* Categories */}
+        <div className="gpf-section">
+          <label className="gpf-section-title">Categories</label>
+          <div className="gpf-checkbox-group">
+            {categories.map(cat => (
+              <label key={cat._id} className="gpf-checkbox-label">
+                <input 
+                  type="checkbox" 
+                  checked={(form.category || '').includes(cat.slug)}
+                  onChange={() => toggleArray('category', cat.slug)}
+                />
+                {cat.name}
+              </label>
             ))}
-          </select>
-        </label>
+          </div>
+        </div>
+
+        {/* Sizes */}
+        <div className="gpf-section">
+          <label className="gpf-section-title">Size</label>
+          <div className="gpf-size-grid">
+            {SIZE_OPTIONS.map(size => (
+              <button
+                key={size}
+                className={`gpf-size-btn ${form.sizes?.includes(size) ? 'active' : ''}`}
+                onClick={() => toggleArray('sizes', size)}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Colors */}
+        <div className="gpf-section">
+          <label className="gpf-section-title">Color</label>
+          <div className="gpf-color-grid">
+            {COLOR_OPTIONS.map(color => (
+              <div
+                key={color.name}
+                className={`gpf-color-swatch ${form.colors?.includes(color.name) ? 'active' : ''}`}
+                style={{ backgroundColor: color.hex }}
+                title={color.name}
+                onClick={() => toggleArray('colors', color.name)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Price Range */}
+        <div className="gpf-section">
+          <label className="gpf-section-title">Price Range</label>
+          <div className="gpf-price-inputs">
+            <input 
+              type="number" 
+              placeholder="Min" 
+              value={form.minPrice || ''}
+              onChange={(e) => setField('minPrice', e.target.value)}
+            />
+            <span className="gpf-price-separator">-</span>
+            <input 
+              type="number" 
+              placeholder="Max" 
+              value={form.maxPrice || ''}
+              onChange={(e) => setField('maxPrice', e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Actions */}
         <div className="gpf-actions">
-          <button type="button" className="gpf-btn gpf-btn--primary" onClick={handleApply}>
-            Apply
-          </button>
-          <button type="button" className="gpf-btn gpf-btn--ghost" onClick={handleReset}>
-            <FaTimes aria-hidden /> Reset
-          </button>
+          <button className="gpf-btn-apply" onClick={handleApply}>Apply</button>
+          <button className="gpf-btn-reset" onClick={handleReset}>Reset</button>
         </div>
       </div>
-
-      {expanded && (
-        <div className="global-product-filters__expanded">
-          <div className="gpf-chip-group">
-            <span className="gpf-chip-label">Sizes</span>
-            <div className="gpf-chips">
-              {SIZE_OPTIONS.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  className={`gpf-chip ${form.sizes?.includes(s) ? 'is-active' : ''}`}
-                  onClick={() => toggleArray('sizes', s)}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="gpf-chip-group">
-            <span className="gpf-chip-label">Colors</span>
-            <div className="gpf-chips">
-              {COLOR_OPTIONS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className={`gpf-chip ${form.colors?.includes(c) ? 'is-active' : ''}`}
-                  onClick={() => toggleArray('colors', c)}
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

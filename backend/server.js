@@ -17,12 +17,14 @@ import collectionRoutes from './routes/collectionRoutes.js';
 import categoryRoutes from './routes/categoryRoutes.js';
 import storeOrderRoutes from './routes/storeOrderRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
+import authRoutes from './routes/auth.js';
 
 const app = express();
 
 // CORS - MUST be first middleware
 const allowedOrigins = [
   "http://localhost:3000",
+  "http://localhost:5002",
   "https://blacklocust-frontend.onrender.com",
   "https://blacklocust.in",
   "https://www.blacklocust.in"
@@ -98,6 +100,7 @@ start();
 // Essential Routes
 app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/collections', collectionRoutes);
 app.use('/api/categories', categoryRoutes);

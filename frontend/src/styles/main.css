@@ -1,39 +1,25 @@
 /*
  * Black Locust Fashion E-commerce Platform
- * Peter England Inspired Design System
+ * Premium LIGHT DESIGN SYSTEM
  * 
- * Premium men's fashion e-commerce with sophisticated styling
- * Black background (#1a1a1a) with gold accents (#B8972E)
- * 
- * Author: Development Team
- * Created: 2024
- * Last Modified: 2024
+ * Luxury minimalism (House of Rare)
+ * High conversion UX (Snitch)
+ * Structured clarity (Peter England)
  */
 
-/* Peter England Design System */
 :root {
   /* Brand Colors */
-  --primary-black: #1a1a1a;
-  --primary-gold: #B8972E;
-  --gold-light: #D4AF37;
-  --gold-dark: #8B7500;
-  
-  /* Neutral Colors */
-  --white: #ffffff;
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-300: #d1d5db;
-  --gray-400: #9ca3af;
-  --gray-500: #6b7280;
-  --gray-600: #4b5563;
-  --gray-700: #374151;
-  --gray-800: #1f2937;
-  --gray-900: #111827;
+  --bg-primary: #FFFFFF;
+  --bg-surface: #FAFAFA;
+  --text-primary: #111111;
+  --text-secondary: #6B7280;
+  --accent-gold: #C19A6B;
+  --btn-cta: #000000;
+  --border-color: #E5E7EB;
   
   /* Typography */
-  --font-heading: 'Cormorant Garamond', serif;
-  --font-body: 'Roboto', sans-serif;
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'Inter', sans-serif;
   
   /* Spacing */
   --spacing-xs: 0.25rem;
@@ -49,6 +35,7 @@
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
+  --radius-full: 9999px;
   
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -71,26 +58,21 @@
 html, body {
   width: 100%;
   height: 100%;
-  overflow-x: hidden; /* Only prevent horizontal scroll */
-  overflow-y: auto; /* Allow vertical scrolling */
+  overflow-x: hidden;
+  overflow-y: auto;
   margin: 0;
   padding: 0;
 }
 
-/* Additional overflow prevention */
 html {
-  overflow-x: hidden; /* Only prevent horizontal scroll */
-  overflow-y: auto; /* Allow vertical scrolling */
   scroll-behavior: smooth;
 }
 
 body {
-  font-family: 'Roboto', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--font-body);
   line-height: 1.6;
-  color: #ffffff;
-  background-color: #1a1a1a;
-  overflow-x: hidden; /* Only prevent horizontal scroll */
-  overflow-y: auto; /* Allow vertical scrolling */
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
   min-height: 100vh;
   position: relative;
   font-size: 16px;
@@ -98,7 +80,6 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  scroll-behavior: smooth;
 }
 
 /* Allow vertical scrolling on root elements */
@@ -345,7 +326,7 @@ img {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 600;
-  color: var(--white);
+  color: #111111;
   margin: 0;
   padding: 0;
   line-height: 1.2;
@@ -360,7 +341,7 @@ h6 { font-size: 1rem; }
 
 p, span, div {
   font-family: var(--font-body);
-  color: var(--white);
+  color: #333333;
 }
 
 /* Peter England Animations */
@@ -545,8 +526,8 @@ input:hover, textarea:hover, select:hover {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--primary-black);
-  color: var(--white);
+  background-color: #FFFFFF;
+  color: #111111;
   overflow-x: hidden;
   margin: 0;
   padding: 0;
@@ -660,11 +641,11 @@ input:hover, textarea:hover, select:hover {
 .page-container {
   width: 100%;
   min-height: 100vh;
-  background: var(--primary-black);
+  background: #FFFFFF;
   overflow-x: hidden;
   margin: 0;
   padding: 0;
-  color: var(--white);
+  color: #111111;
   box-sizing: border-box;
   position: relative;
   font-family: var(--font-body);

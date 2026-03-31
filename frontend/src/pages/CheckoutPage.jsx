@@ -224,7 +224,7 @@ const CheckoutPage = () => {
 
       clearCart();
       toast.success('Order placed successfully');
-      navigate('/');
+      navigate(`/order-success?orderId=${order._id}`);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to place order');
     } finally {

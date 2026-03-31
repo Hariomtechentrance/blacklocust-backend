@@ -46,6 +46,12 @@ const collectionSchema = new mongoose.Schema({
     required: [true, 'Collection name is required'],
     trim: true
   },
+  slug: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true
+  },
   description: {
     type: String,
     trim: true
@@ -115,6 +121,7 @@ const categoriesData = [
 const collectionsData = [
   {
     name: "Party Wear",
+    slug: "party-wear",
     description: "Stunning outfits for special occasions and celebrations",
     image: "https://images.unsplash.com/photo-1594633312681-435c7b80c148?w=800&q=80",
     isActive: true,
@@ -124,6 +131,7 @@ const collectionsData = [
   },
   {
     name: "Casual Wear", 
+    slug: "casual-wear",
     description: "Comfortable everyday essentials",
     image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&q=80",
     isActive: true,
@@ -133,6 +141,7 @@ const collectionsData = [
   },
   {
     name: "Formal Wear",
+    slug: "formal-wear",
     description: "Professional attire for business and formal events",
     image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80",
     isActive: true,
@@ -142,6 +151,7 @@ const collectionsData = [
   },
   {
     name: "Summer Collection",
+    slug: "summer-collection",
     description: "Light and breezy outfits for warm weather",
     image: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=800&q=80",
     isActive: true,

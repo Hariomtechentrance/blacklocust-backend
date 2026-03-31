@@ -151,14 +151,14 @@ const LoginPage = () => {
 
   return (
     <div className="login-page">
-      {/* Left Side - Login Form */}
-      <div className="login-left">
-        <div className="login-form-container">
-          <div className="login-logo">
-            <img src={logo} alt="Black Locust" className="login-logo-img" />
-            <h2>Welcome Back</h2>
-            <p>Login to your account</p>
-          </div>
+      <div className="login-container">
+        <div className="login-logo-section">
+          <img src={logo} alt="Black Locust" className="login-logo" />
+        </div>
+        
+        <div className="login-form-wrapper">
+          <h2 className="login-title">Welcome Back</h2>
+          <p className="login-subtitle">Login to your account</p>
 
           <form className="login-form" onSubmit={handleLogin}>
             <div className="form-group">
@@ -176,7 +176,7 @@ const LoginPage = () => {
 
             <div className="form-group">
               <label htmlFor="password">Password</label>
-              <div className="password-input">
+              <div className="password-input-wrapper">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   id="password"
@@ -188,7 +188,7 @@ const LoginPage = () => {
                 />
                 <button
                   type="button"
-                  className="password-toggle"
+                  className="password-toggle-btn"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
@@ -197,7 +197,7 @@ const LoginPage = () => {
             </div>
 
             <div className="form-options">
-              <label className="remember-me">
+              <label className="remember-me-checkbox">
                 <input
                   type="checkbox"
                   name="rememberMe"
@@ -206,131 +206,40 @@ const LoginPage = () => {
                 />
                 <span>Remember me</span>
               </label>
-              <Link to="/forgot-password" className="forgot-password">
+              <Link to="/forgot-password" name="forgot-password-link">
                 Forgot password?
               </Link>
             </div>
 
-            <button type="submit" className="login-btn" disabled={localLoading}>
+            <button type="submit" className="login-submit-btn" disabled={localLoading}>
               {localLoading ? 'Logging in...' : 'Login'}
             </button>
           </form>
 
-          {/* Social Login */}
-          <div className="social-login">
-            <div className="divider">
-              <span>OR</span>
-            </div>
-            <div className="social-buttons">
-              <button
-                type="button"
-                className="social-btn google-btn"
-                onClick={() => handleSocialLogin('Google')}
-              >
-                <FaGoogle />
-                <span>Continue with Google</span>
+          <div className="social-login-section">
+            <div className="login-divider"><span>OR</span></div>
+            <div className="social-login-buttons">
+              <button type="button" className="social-login-btn google-login" onClick={() => handleSocialLogin('Google')}>
+                <FaGoogle /><span>Continue with Google</span>
               </button>
-              <button
-                type="button"
-                className="social-btn facebook-btn"
-                onClick={() => handleSocialLogin('Facebook')}
-              >
-                <FaFacebook />
-                <span>Continue with Facebook</span>
+              <button type="button" className="social-login-btn facebook-login" onClick={() => handleSocialLogin('Facebook')}>
+                <FaFacebook /><span>Continue with Facebook</span>
               </button>
             </div>
           </div>
 
-          {/* OTP Login */}
-          <div className="otp-login">
-            <button
-              type="button"
-              className="otp-btn"
-              onClick={() => setShowOTPLogin(true)}
-            >
-              <FaMobileAlt />
-              Login with OTP
+          <div className="otp-login-link">
+            <button type="button" onClick={() => setShowOTPLogin(true)}>
+              <FaMobileAlt /> Login with OTP
             </button>
           </div>
 
-          <div className="signup-link">
-            <p>
-              Don't have an account? <Link to="/register">Sign up</Link>
-            </p>
+          <div className="register-redirect">
+            <p>Don't have an account? <Link to="/register">Sign up</Link></p>
           </div>
         </div>
       </div>
 
-      {/* Right Side - Big Logo */}
-      <div className="login-right">
-        <div className="login-logo-section">
-          <img src={logo} alt="Black Locust" className="login-logo" />
-        </div>
-      </div>
-
-      {/* OTP Modal */}
-      {showOtp && (
-        <div className="otp-modal">
-          <div className="otp-modal-content">
-            <div className="otp-modal-header">
-              <h3>Enter OTP</h3>
-              <button
-                className="close-btn"
-                onClick={() => setShowOtp(false)}
-              >
-                <FaTimes />
-              </button>
-            </div>
-            <div className="otp-modal-body">
-              <p>Enter the 6-digit OTP sent to your email</p>
-              <div className="otp-input-container">
-                {[0, 1, 2, 3, 4, 5].map((index) => (
-                  <input
-                    key={index}
-                    type="text"
-                    maxLength="1"
-                    value={otp[index] || ''}
-                    onChange={(e) => handleOtpChange(otp.slice(0, index) + e.target.value + otp.slice(index + 1))}
-                    onKeyPress={handleOtpKeyPress}
-                    className="otp-input"
-                  />
-                ))}
-              </div>
-              <div className="otp-actions">
-                <button
-                  type="button"
-                  className="resend-otp-btn"
-                  onClick={sendOtp}
-                >
-                  Resend OTP
-                </button>
-                <button
-                  type="button"
-                  className="verify-otp-btn"
-                  onClick={handleOtpLogin}
-                >
-                  Verify OTP
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Social Login Modal */}
-      {showSocialLogin && (
-        <div className="social-login-modal">
-          <div className="social-login-content">
-            <div className="social-login-header">
-              <h3>Connecting to {socialLoginMethod}</h3>
-              <div className="loading-spinner"></div>
-              <p>Please wait while we connect your {socialLoginMethod} account...</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* OTP Login Modal */}
       {showOTPLogin && (
         <OTPLogin
           onBack={() => setShowOTPLogin(false)}

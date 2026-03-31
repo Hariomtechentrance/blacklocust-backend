@@ -1,16 +1,13 @@
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-
-// Load environment variables
-dotenv.config();
+import mongoose from 'mongoose';
+import 'dotenv/config';
 
 // Import models
-const Product = require('../models/Product');
-const User = require('../models/User');
-const Newsletter = require('../models/Newsletter');
+import Product from '../models/Product.js';
+import User from '../models/userModel.js';
+import Newsletter from '../models/Newsletter.js';
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/blacklocust')
+mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/blacklocust')
   .then(() => console.log('✅ MongoDB Connected for seeding'))
   .catch(err => {
     console.error('❌ MongoDB Connection Error:', err);
